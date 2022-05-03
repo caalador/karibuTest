@@ -19,6 +19,11 @@ public class AboutView extends VerticalLayout {
         img.setWidth("200px");
         add(img);
 
+        // This is to test firs();
+        Image img2 = new Image("images/empty-plant2.png", "second plant");
+        img2.setId("second");
+        add(img2);
+
         add(new H2("This place intentionally left empty"));
         add(new Paragraph("It’s a place where you can grow your own UI 🤗"));
 
