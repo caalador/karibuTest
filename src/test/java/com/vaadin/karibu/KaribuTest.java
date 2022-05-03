@@ -5,45 +5,73 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Optional;
 
 import com.github.mvysny.kaributesting.v10.MockVaadin;
+import com.github.mvysny.kaributesting.v10.PrettyPrintTree;
 import com.github.mvysny.kaributesting.v10.Routes;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfoList;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.ExternalResource;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
+import org.slf4j.LoggerFactory;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.karibu.locator.ComponentLocator;
 
-@ExtendWith(PrettyTreeExtension.class)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+
+
 public abstract class KaribuTest {
 
     private Routes routes;
     private ClassInfoList handlesListeners;
 
-    @BeforeAll
-    public void discover() {
-        routes = new Routes().autoDiscoverViews(scanPackage());
-        final ClassGraph classGraph = new ClassGraph().enableClassInfo()
-                .enableAnnotationInfo()
-                .acceptPackages("com.vaadin.karibu.locator");
-        handlesListeners = classGraph.scan(2)
-                .getClassesWithAnnotation(HandlesTypes.class.getName());
-    }
+    @Rule
+    public final ExternalResource resource = new ExternalResource() {
+        @Override
+        protected void before() {
+            routes = new Routes().autoDiscoverViews(scanPackage());
+            final ClassGraph classGraph = new ClassGraph().enableClassInfo()
+                    .enableAnnotationInfo()
+                    .acceptPackages("com.vaadin.karibu.locator");
+            handlesListeners = classGraph.scan(2)
+                    .getClassesWithAnnotation(HandlesTypes.class.getName());
+        };
 
-    @BeforeEach
+    };
+
+    @Before
     public void init() {
         MockVaadin.setup(getRoutes(), UI::new);
     }
 
-    @AfterEach
-    public void clean() {
-        MockVaadin.tearDown();
-    }
+    // this needs to be in testWatcher finished else we will clean the UI before
+    // we get the change to generate the tree.
+//    @After
+//    public void clean() {
+//        MockVaadin.tearDown();
+//    }
+
+    @Rule
+    public TestRule watchman = new TestWatcher() {
+        @Override
+        protected void failed(Throwable e, Description description) {
+            final String prettyPrintTree = PrettyPrintTree.Companion.ofVaadin(
+                    UI.getCurrent()).print();
+            LoggerFactory.getLogger(PrettyTreeExtension.class)
+                    .error("Test {}::{} failed with the tree:\n{}",
+                            description.getTestClass(),
+                            description.getMethodName(), prettyPrintTree);
+        }
+
+        @Override
+        protected void finished(Description description) {
+            MockVaadin.tearDown();
+        }
+    };
 
     public Routes getRoutes() {
         return routes;

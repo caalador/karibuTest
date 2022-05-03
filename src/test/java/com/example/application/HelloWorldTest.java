@@ -10,7 +10,7 @@ import com.vaadin.karibu.locator.NotificationLocator;
 import com.vaadin.karibu.locator.TextFieldLocator;
 
 import org.junit.Assert;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 public class HelloWorldTest extends KaribuTest {
 

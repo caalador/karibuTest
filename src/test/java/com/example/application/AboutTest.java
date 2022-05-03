@@ -2,7 +2,7 @@ package com.example.application;
 
 import com.example.application.views.about.AboutView;
 import org.junit.Assert;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.karibu.locator.ComponentLocator;
